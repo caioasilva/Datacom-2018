@@ -14,8 +14,9 @@
 #define ETHER_TYPE	0x1996
 
 char* encodeProtocol(int* size, char* destinationName, char* sourceName, char* message)
-{
-	*size = SOURCE_NAME_SIZE + DEST_NAME_SIZE + sizeof(message);
+{	
+	//printf("%s",message);
+	*size = SOURCE_NAME_SIZE + DEST_NAME_SIZE + strlen(message);
 
 	//char data[size];
 	char* data = calloc(*size,sizeof(char));
@@ -24,7 +25,7 @@ char* encodeProtocol(int* size, char* destinationName, char* sourceName, char* m
 	prot_ptr+=DEST_NAME_SIZE;
 	memcpy(prot_ptr,sourceName,strlen(sourceName));
 	prot_ptr+=SOURCE_NAME_SIZE;
-	memcpy(prot_ptr,message,sizeof(message));
+	memcpy(prot_ptr,message,strlen(message));
 	return data;
 }
 
