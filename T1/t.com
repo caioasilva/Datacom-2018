@@ -56,9 +56,6 @@ int32_t ascii_to_binary(char *input, char **out, uint64_t len) {
         char *o = &(*out)[8 * i];
         unsigned char b;
 
-        // for (b = 7; b >= 0; b--)
-        //     *o++ = (ch & (1 << b)) ? '1' : '0';
-
         for (b = 0x80; b; b >>= 1)
             *o++ = ch & b ? '1' : '0';
     }
@@ -78,38 +75,16 @@ int32_t nrzi(char* input, char **out, uint64_t len) {
     if((rtn = mem_alloc(out, len, len)) == -1){
         return -1;
     }
-
-    printf("cor: %s\n", "0011010110000011");
-    printf("enc: %c", current);
-    for (i = 1; i < len; i++) {
-        // printf("Iteration %d\n", i);
-            // printf("%c\n", message[i]);
-        if(input[i] == '0') {
-            // printf("aqui\n");
-            printf("%c", current);
-            // *out[i] = current;
-        } else {
-            // printf("nope\n");
-            current = (current == '0') ? '1' : '0';
-            // *out[i] = current;
-            printf("%c", current);
-        }
-
-    }
     
-    for(i = 1; i < len; i++) {
+    for(i = 0; i < len; i++) {
         unsigned char ch = input[i];
         char *o = &(*out)[i];
-        current = ch != '0' ? !current : current;
-        *o++ = current;
-        printf("%c", *o);
+
+        *o++ = ch == '0' ? current : (current = current == '0' ? '1' : '0');
     }
 
-
-    printf("\nLeaving\n");
-
     (*out)[len] = '\0';
-
+    printf("cor: %s\n", "0011010110000011");
     return 0;
 }
 
@@ -128,7 +103,6 @@ int32_t manchester(char* input, char **out, uint64_t len) {
     for (i = 0; i < len; i++) {
         unsigned char ch = input[i];
         char *o = &(*out)[2 * i];
-        unsigned char b;
 
         for(j = 0; j < 2; j++) {
             *o++ = ch ^ j;
