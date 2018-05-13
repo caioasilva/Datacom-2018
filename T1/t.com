@@ -65,6 +65,19 @@ int32_t ascii_to_binary(char *input, char **out, uint64_t len) {
     return (str_len);
 }
 
+int bin2dec (int num) {
+    int  decimal_val = 0, base = 1, rem;
+
+    while (num > 0) {
+        rem = num % 10;
+        decimal_val = decimal_val + rem * base;
+        num = num / 10 ;
+        base = base * 2;
+    }
+
+    return decimal_val;
+}
+
 int32_t nrz(char* input, char **out, uint64_t len) {
     uint32_t i;
     uint32_t rtn;
@@ -130,6 +143,50 @@ int32_t nrzi(char* input, char **out, uint64_t len) {
     return 0;
 }
 
+int32_t _4b5b(char* input, char **out, uint64_t len) {
+    uint32_t i;
+    uint32_t j;
+    uint32_t rtn;
+    uint32_t str_len = len + len/4;
+    char encodings[80] = { '1', '1', '1', '1', '0', 
+                            '0', '1', '0', '0', '1', 
+                            '1', '0', '1', '0', '0', 
+                            '1', '0', '1', '0', '1', 
+                            '0', '1', '0', '1', '0', 
+                            '0', '1', '0', '1', '1', 
+                            '0', '1', '1', '1', '0', 
+                            '0', '1', '1', '1', '1', 
+                            '1', '0', '0', '1', '0', 
+                            '1', '0', '0', '1', '1', 
+                            '1', '0', '1', '1', '0', 
+                            '1', '0', '1', '1', '1', 
+                            '1', '1', '0', '1', '0', 
+                            '1', '1', '0', '1', '1', 
+                            '1', '1', '1', '0', '0', 
+                            '1', '1', '1', '0', '1'};
+
+    if((rtn = mem_alloc(out, len, len)) == -1){
+        return -1;
+    }
+
+    for(i = 0; i < len/4; i++) {
+        char *o = &(*out)[5 * i];
+        char subbuff[5];
+        memcpy(subbuff, &input[4 * i], 4);
+        subbuff[4] = '\0';
+
+        int index = bin2dec(atoi(subbuff));
+
+        for(j = 0; j < 5; j++) {
+            *o++ = encodings[5 * index + j];
+        }
+    }
+
+    (*out)[str_len] = '\0';
+
+    return 0;
+}
+
 int main(int argc, char *argv[]) {
     int32_t rtrn = 0;
     char *buffer = NULL;
@@ -149,6 +206,8 @@ int main(int argc, char *argv[]) {
         manchester(buffer, &encoding, strlen(buffer));
     } else if (strcmp(argv[1], "-i") == 0) {
         nrzi(buffer, &encoding, strlen(buffer));
+    } else if (strcmp(argv[1], "-f") == 0) {
+        _4b5b(buffer, &encoding, strlen(buffer));
     }
 
     printf("enc: %s\n", encoding);
