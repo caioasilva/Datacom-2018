@@ -65,32 +65,27 @@ int32_t ascii_to_binary(char *input, char **out, uint64_t len) {
     return (str_len);
 }
 
-int32_t nrzi(char* input, char **out, uint64_t len) {
-    printf("str: %s\n", input);
-
+int32_t nrz(char* input, char **out, uint64_t len) {
     uint32_t i;
     uint32_t rtn;
-    char current = '0';
 
     if((rtn = mem_alloc(out, len, len)) == -1){
         return -1;
     }
-    
+
     for(i = 0; i < len; i++) {
         unsigned char ch = input[i];
         char *o = &(*out)[i];
 
-        *o++ = ch == '0' ? current : (current = current == '0' ? '1' : '0');
+        *o++ = ch;
     }
 
     (*out)[len] = '\0';
-    printf("cor: %s\n", "0011010110000011");
-    return 0;
+
+    return (len);    
 }
 
 int32_t manchester(char* input, char **out, uint64_t len) {
-    printf("str: %s\n", input);
-
     uint32_t i;
     uint32_t j;
     uint32_t rtn;
@@ -110,8 +105,29 @@ int32_t manchester(char* input, char **out, uint64_t len) {
     }
 
     (*out)[str_len] = '\0';
-    printf("cor: 01011001101010100110010101011001\n");
+
     return (str_len);
+}
+
+int32_t nrzi(char* input, char **out, uint64_t len) {
+    uint32_t i;
+    uint32_t rtn;
+    char current = '0';
+
+    if((rtn = mem_alloc(out, len, len)) == -1){
+        return -1;
+    }
+    
+    for(i = 0; i < len; i++) {
+        unsigned char ch = input[i];
+        char *o = &(*out)[i];
+
+        *o++ = ch == '0' ? current : (current = current == '0' ? '1' : '0');
+    }
+
+    (*out)[len] = '\0';
+
+    return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -128,7 +144,7 @@ int main(int argc, char *argv[]) {
     printf("str: %s\n", buffer);
 
     if (strcmp(argv[1], "-n") == 0) {
-
+        nrz(buffer, &encoding, strlen(buffer));
     } else if (strcmp(argv[1], "-m") == 0) {
         manchester(buffer, &encoding, strlen(buffer));
     } else if (strcmp(argv[1], "-i") == 0) {
