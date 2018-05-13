@@ -113,12 +113,39 @@ int32_t nrzi(char* input, char **out, uint64_t len) {
     return 0;
 }
 
+int32_t manchester(char* input, char **out, uint64_t len) {
+    printf("str: %s\n", input);
+
+    uint32_t i;
+    uint32_t j;
+    uint32_t rtn;
+    uint32_t str_len = len * 2;
+
+    if((rtn = mem_alloc(out, len, str_len)) == -1){
+        return -1;
+    }
+
+    for (i = 0; i < len; i++) {
+        unsigned char ch = input[i];
+        char *o = &(*out)[2 * i];
+        unsigned char b;
+
+        for(j = 0; j < 2; j++) {
+            *o++ = ch ^ j;
+        }
+    }
+
+    (*out)[str_len] = '\0';
+    printf("cor: 01011001101010100110010101011001\n");
+    return (str_len);
+}
+
 int main(int argc, char *argv[]) {
     int32_t rtrn = 0;
     char *buffer = NULL;
     char *encoding = NULL;
 
-    rtrn = ascii_to_binary(argv[1], &buffer, strlen(argv[1]));
+    rtrn = ascii_to_binary(argv[2], &buffer, strlen(argv[2]));
     if(rtrn < 0) {
         printf("Can't convert string\n");
         return (-1);
@@ -126,7 +153,13 @@ int main(int argc, char *argv[]) {
 
     printf("str: %s\n", buffer);
 
-    nrzi(buffer, &encoding, strlen(buffer));
+    if (strcmp(argv[1], "-n") == 0) {
+
+    } else if (strcmp(argv[1], "-m") == 0) {
+        manchester(buffer, &encoding, strlen(buffer));
+    } else if (strcmp(argv[1], "-i") == 0) {
+        nrzi(buffer, &encoding, strlen(buffer));
+    }
 
     printf("enc: %s\n", encoding);
 
