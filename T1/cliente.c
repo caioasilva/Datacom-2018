@@ -13,6 +13,7 @@
 #define BUFFER_SIZE 1024
 #define SOURCE_NAME_SIZE 10
 #define DEST_NAME_SIZE 10
+#define ENCODING_DESC_SIZE 2
 #define ETHER_TYPE	0x1996
 
 /**
@@ -205,20 +206,22 @@ int char_to_bits(char* input, char** output, int len){
 	int size =0;
 	int i,j,c,jMax;
 
-	//bits = malloc(size);
+	bits = malloc(1);
 	//memset(cursor,0,size);
 	for(i=0;i<len;i+=8){
 		size = size + sizeof(char);
 		//printf("s: %d\n so: %s\n", size,sizeof(*bits));
 		bits = realloc(bits,size);
 		cursor = bits+i/8;
+		//printf("c: %d\n",i/8);
 		memset(cursor,0,1);
-		if(len-i < 8){
-			jMax = len-i;
-		}else
-			jMax=8;
+		// if(len-i < 8){
+		// 	jMax = len-i;
+		// }else
+		// 	jMax=8;
+
 		//printf("bits: %x\ncursor: %x\n",bits,cursor);
-		for(j=0;j<jMax;j++){
+		for(j=0;j<8;j++){
 			//printf("%x\n",(char)*cursor);
 			*cursor <<= 1;
 			c = *(input+i+j)-48;
@@ -244,6 +247,7 @@ char* encodeProtocol(int* size, char* destinationName, char* sourceName, char* m
 	if (encoding == NULL){
 		printf("No encoding especified. Using NRZ Encoding\n");
 		nrz(bin, &temp, strlen(bin));
+		strcpy(encoding,"-n");
 	} else if (strcmp(encoding, "-m") == 0) {
 		printf("Using Manchester Encoding\n");
     	manchester(bin, &temp, strlen(bin));
@@ -259,12 +263,13 @@ char* encodeProtocol(int* size, char* destinationName, char* sourceName, char* m
 	} else {
 		printf("Invalid encoding especified. Using NRZ Encoding\n");
 		nrz(bin, &temp, strlen(bin));
+		strcpy(encoding,"-n");
 	}
 	printf("Encoded message bits: \n%s\n",temp);
 	messageSize = char_to_bits(temp,&encodedMessage,strlen(temp));
 
 	//printf("%s",message);
-	*size = SOURCE_NAME_SIZE + DEST_NAME_SIZE + messageSize;
+	*size = SOURCE_NAME_SIZE  + DEST_NAME_SIZE + ENCODING_DESC_SIZE + messageSize;
 
 	//printf("Encoded message bytes: %s\n",encodedMessage);
 	//char data[size];
@@ -274,6 +279,8 @@ char* encodeProtocol(int* size, char* destinationName, char* sourceName, char* m
 	prot_ptr+=DEST_NAME_SIZE;
 	memcpy(prot_ptr,sourceName,strlen(sourceName));
 	prot_ptr+=SOURCE_NAME_SIZE;
+	memcpy(prot_ptr,encoding,strlen(encoding));
+	prot_ptr+=ENCODING_DESC_SIZE;
 	memcpy(prot_ptr,encodedMessage,messageSize);
 	//printf("%x\n",encodedMessage);
 	return data;
@@ -295,6 +302,7 @@ int main(int argc, char *argv[])
 	unsigned int destinationMAC[6];
 	char* protocol;
 	int protocol_size;
+	int notwait=0;
 	
 	/* Get interface name */
 	if (argc > 5){
@@ -307,6 +315,8 @@ int main(int argc, char *argv[])
       	}else{
       		encode = NULL;
       	}
+      	if (argc >7)
+      		notwait=1;
       	protocol = encodeProtocol(&protocol_size, argv[4],argv[3],argv[5],encode);
       	//protocol_size = sizeof(protocol);
 
@@ -376,13 +386,16 @@ int main(int argc, char *argv[])
 		for (int j = 0; j < tx_len; j++)
 			printf("%02x ",(unsigned char)sendDataBuffer[j]);
 		printf("\n");
-		char receiveBuffer[BUFFER_SIZE];
-		if( recv(sockfd , receiveBuffer , BUFFER_SIZE , 0) < 0)
-	    {
-	        printf("Response receive fail");
-	    } else {
-	    	
-	    }
+
+		if (!notwait){
+			char command[100];
+            sprintf(command,"./servidor.app %s %s 1 > null.out",
+                            interfaceName, argv[3]);
+            //printf("%s\n",command);
+            if(system(command)==0){
+                printf("Response Received!\n");
+            }
+		}
 	}
 	return 0;
 }

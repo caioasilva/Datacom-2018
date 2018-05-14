@@ -17,13 +17,14 @@
 #include <net/if.h>
 #include <netinet/ether.h>
 #include <errno.h>
+#include <unistd.h>
 #include <math.h>
 
 #define BUFFER_SIZE 1024
 #define SOURCE_NAME_SIZE 10
 #define DEST_NAME_SIZE 10
 #define ETHER_TYPE	0x1996
-
+#define ENCODING_DESC_SIZE 2
 /**
 * Allocates memory for the output variables
 * 
@@ -254,12 +255,18 @@ int main(int argc, char *argv[])
 	u_char MACAddr[6];
 	char packet_dest_name[DEST_NAME_SIZE];
 	char packet_source_name[SOURCE_NAME_SIZE];
+    char packet_encoding[ENCODING_DESC_SIZE];
 	char* message;
+    int responseSent=0;
+    int returnReceive=0;
+   // struct sockaddr_ll socket_address;
 	
 	/* Get interface name */
 	if (argc > 2){
 		strcpy(interfaceName, argv[1]);
 		strncpy(my_dest_name, argv[2], 10);
+        if (argc > 3)
+            returnReceive=1;
 	}else{
 		fprintf(stderr,"Invalid arguments. Example:\n./servidor interface myName\n");
 		return 1;
@@ -314,64 +321,115 @@ int main(int argc, char *argv[])
 	while(1){
 		//printf("Waiting for packet...\n");
 		numbytes = recvfrom(sockfd, buf, BUFFER_SIZE, 0, NULL, NULL);
-				printf("> Captured a packet: %lu bytes\n", numbytes);
-		if (eh->ether_dhost[0] == MACAddr[0] &&
-			eh->ether_dhost[1] == MACAddr[1] &&
-			eh->ether_dhost[2] == MACAddr[2] &&
-			eh->ether_dhost[3] == MACAddr[3] &&
-			eh->ether_dhost[4] == MACAddr[4] &&
-			eh->ether_dhost[5] == MACAddr[5]) {
-			printf("  Correct destination MAC address\n");
-		} else {
-			printf("  Wrong destination MAC: %x:%x:%x:%x:%x:%x but i will take a look into it anyway...\n",
-							eh->ether_dhost[0],
-							eh->ether_dhost[1],
-							eh->ether_dhost[2],
-							eh->ether_dhost[3],
-							eh->ether_dhost[4],
-							eh->ether_dhost[5]);
-		}
-		char* ptr = buf+sizeof(struct ether_header);
-		strncpy(packet_dest_name,ptr,DEST_NAME_SIZE);
-		ptr+=DEST_NAME_SIZE;
-		strncpy(packet_source_name,ptr,SOURCE_NAME_SIZE);
-		ptr+=SOURCE_NAME_SIZE;
-		int sizeMessage = numbytes - sizeof(struct ether_header) - DEST_NAME_SIZE - SOURCE_NAME_SIZE;
-		message = malloc((sizeMessage+1)*sizeof(char));
-		strncpy(message,ptr,sizeMessage);
-		
-		printf("  Source: %s\n  Destination: %s\n",packet_source_name,packet_dest_name);
-		if (strcmp(my_dest_name,packet_dest_name)==0){
-			printf("  IT IS MINE!\n\n");
-		} else {
-			printf("  Not mine :( but i don't care, i want to read what's in there\n\n");
-		}
-		char* decoded;
-		char* bin;
+        if (!responseSent)
+        {
+    		printf("> Captured a packet: %lu bytes\n", numbytes);
+    		if (eh->ether_dhost[0] == MACAddr[0] &&
+    			eh->ether_dhost[1] == MACAddr[1] &&
+    			eh->ether_dhost[2] == MACAddr[2] &&
+    			eh->ether_dhost[3] == MACAddr[3] &&
+    			eh->ether_dhost[4] == MACAddr[4] &&
+    			eh->ether_dhost[5] == MACAddr[5]) {
+    			printf("  Correct destination MAC address\n");
+    		} else {
 
-		ascii_to_binary(message, &bin, strlen(message),8);
+    			printf("  Wrong destination MAC: %x:%x:%x:%x:%x:%x but i will take a look into it anyway...\n",
+    							eh->ether_dhost[0],
+    							eh->ether_dhost[1],
+    							eh->ether_dhost[2],
+    							eh->ether_dhost[3],
+    							eh->ether_dhost[4],
+    							eh->ether_dhost[5]);
+                // if(returnReceive)
+                //     return 1;
+    		}
+    		char* ptr = buf+sizeof(struct ether_header);
+    		strncpy(packet_dest_name,ptr,DEST_NAME_SIZE);
+    		ptr+=DEST_NAME_SIZE;
+    		strncpy(packet_source_name,ptr,SOURCE_NAME_SIZE);
+    		ptr+=SOURCE_NAME_SIZE;
+            strncpy(packet_encoding,ptr,ENCODING_DESC_SIZE);
+            ptr+=ENCODING_DESC_SIZE;
+    		int sizeMessage = numbytes - sizeof(struct ether_header) - DEST_NAME_SIZE - SOURCE_NAME_SIZE - ENCODING_DESC_SIZE;
+    		message = malloc((sizeMessage+1)*sizeof(char));
+    		strncpy(message,ptr,sizeMessage);
+    		
+    		printf("  Source: %s\n  Destination: %s\n",packet_source_name,packet_dest_name);
+    		if (strcmp(my_dest_name,packet_dest_name)==0){
+    			printf("  IT IS MINE!");
+                if(returnReceive)
+                    return 0;
+                else{
+                    char buffer[10] = "olá";
+                    // if(sendto(sockfd,buffer,10,0)>0){
+                    //     printf("Respondido\n");
+                    // }
+                    char command[100];
+                    sprintf(command,"./cliente.app %s %x:%x:%x:%x:%x:%x %s %s %s -%c 1 > nul.out",
+                                    interfaceName,
+                                    eh->ether_dhost[0],
+                                    eh->ether_dhost[1],
+                                    eh->ether_dhost[2],
+                                    eh->ether_dhost[3],
+                                    eh->ether_dhost[4],
+                                    eh->ether_dhost[5],
+                                    my_dest_name,
+                                    packet_source_name,
+                                    buffer,
+                                    packet_encoding[1]);
+                    //printf("%s\n",command);
+                    sleep(1);
+                    if(system(command)==0){
+                        responseSent=1;
+                        printf(" and I answered :)\n");
+                    }
+                    printf("\n");
+                }
+    		} else {
+    			printf("  Not mine :( but i don't care, i want to read what's in there\n\n");
+    		}
+    		char* decoded;
+    		char* bin;
 
-		printf("  -Message bits:\n   %s\n",bin);
+    		ascii_to_binary(message, &bin, strlen(message),8);
+            printf("  -Message bits:\n   %s\n",bin);
 
-		nrz(bin, &decoded, strlen(bin));
-		printf("  -Decoding:\n   NRZ: %s\n",decoded);
+            printf("  -Decoding:\n");
+            if (packet_encoding == NULL){
+            nrz(bin, &decoded, strlen(bin));
+            printf("   NRZ: %s\n",decoded);
+            } else if (strncmp(packet_encoding, "-m",ENCODING_DESC_SIZE) == 0) {
+            manchester(bin, &decoded, strlen(bin));
+            printf("   Manchester: %s\n",decoded);
+            } else if (strncmp(packet_encoding, "-i",ENCODING_DESC_SIZE) == 0) {
+            nrzi(bin, &decoded, strlen(bin));
+            printf("   NRZI: %s\n",decoded);
+            } else if (strncmp(packet_encoding, "-f",ENCODING_DESC_SIZE) == 0) {
+            _4b5b(bin, &decoded, strlen(bin));
+            printf("   4B5B: %s\n",decoded);
+            } else if (strncmp(packet_encoding, "-n",ENCODING_DESC_SIZE) == 0){
+            nrz(bin, &decoded, strlen(bin));
+            printf("   NRZ: %s\n",decoded);
+            } else {
+            nrz(bin, &decoded, strlen(bin));
+            printf("=  NRZ: %s\n",decoded);
+            }
 
-		manchester(bin, &decoded, strlen(bin));
-		printf("   Manchester: %s\n",decoded);
 
-		nrzi(bin, &decoded, strlen(bin));
-		printf("   NRZI: %s\n",decoded);
 
-		_4b5b(bin, &decoded, strlen(bin));
-		printf("   4B5B: %s\n",decoded);
-		printf("\n");
-		
-		
-		// 	/* Print packet */
-		// printf("\tData:");
-		// for (i=0; i<numbytes; i++) printf("%02x:", buf[i]);
-		// printf("\n");
 
+    		printf("\n");
+    		
+    		
+    		// 	/* Print packet */
+    		// printf("\tData:");
+    		// for (i=0; i<numbytes; i++) printf("%02x:", buf[i]);
+    		// printf("\n");
+        }
+        else
+        {
+            responseSent=0;
+        }
 	}
 
 
