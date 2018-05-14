@@ -187,6 +187,40 @@ int32_t _4b5b(char* input, char **out, uint64_t len) {
     return 0;
 }
 
+int char_to_bits(char* input, char** output, int len){
+	char* bits;
+	char* cursor;
+	int size=0;
+	int i,j,c,jMax;
+
+	bits = malloc(1);
+	for(i=0;i<len;i+=8){
+		size = size + sizeof(char);
+		bits = realloc(bits,size);
+		cursor = bits+i/8;
+		memset(cursor,0,1);
+		if(len-i < 8){
+			jMax = len-i;
+		}else
+			jMax=8;
+		//printf("bits: %x\ncursor: %x\n",bits,cursor);
+		for(j=0;j<jMax;j++){
+			//printf("%x\n",(char)*cursor);
+			*cursor <<= 1;
+			c = *(input+i+j)-48;
+			printf("d: %d\n", c);
+			*cursor |= (c & 0x01);
+		}
+		//printf("%x\n",(char)*bits);
+		//printf("%x\n",(char)*cursor);
+	}
+	//printf("bits: %x\ncursor: %x\n",bits,cursor);
+	//printf("%x\n",(char)*(bits));]
+	*output = bits;
+	return size;
+}
+
+
 int main(int argc, char *argv[]) {
     int32_t rtrn = 0;
     char *buffer = NULL;
@@ -211,6 +245,8 @@ int main(int argc, char *argv[]) {
     }
 
     printf("enc: %s\n", encoding);
+
+    printf("%x",char_to_bits(encoding,&encoding,strlen(encoding));
 
     return (0);
 }

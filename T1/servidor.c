@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 		strcpy(interfaceName, argv[1]);
 		strncpy(my_dest_name, argv[2], 10);
 	}else{
-		fprintf(stderr,"Invalid arguments\n");
+		fprintf(stderr,"Invalid arguments. Example:\n./servidor interface myName\n");
 		return 1;
 	}
 
@@ -89,26 +89,27 @@ int main(int argc, char *argv[])
 	// strncpy(if_mac.ifr_name, interfaceName, IFNAMSIZ-1);
 	// if (ioctl(sockfd, SIOCGIFHWADDR, &if_mac) < 0)
 	//     perror("SIOCGIFHWADDR");
-	printf("My MAC: %x:%x:%x:%x:%x:%x\n",
+	printf("My MAC: %x:%x:%x:%x:%x:%x\nMy Name: %s\n\n",
 							MACAddr[0],
 							MACAddr[1],
 							MACAddr[2],
 							MACAddr[3],
 							MACAddr[4],
-							MACAddr[5]);
+							MACAddr[5], 
+							my_dest_name);
 	while(1){
-		printf("Waiting for packet...\n");
+		//printf("Waiting for packet...\n");
 		numbytes = recvfrom(sockfd, buf, BUFFER_SIZE, 0, NULL, NULL);
-		printf("Got packet %lu bytes\n", numbytes);
+				printf("> Captured a packet: %lu bytes\n", numbytes);
 		if (eh->ether_dhost[0] == MACAddr[0] &&
 			eh->ether_dhost[1] == MACAddr[1] &&
 			eh->ether_dhost[2] == MACAddr[2] &&
 			eh->ether_dhost[3] == MACAddr[3] &&
 			eh->ether_dhost[4] == MACAddr[4] &&
 			eh->ether_dhost[5] == MACAddr[5]) {
-			printf("Correct destination MAC address\n");
+			printf("  Correct destination MAC address\n");
 		} else {
-			printf("Wrong destination MAC: %x:%x:%x:%x:%x:%x\n",
+			printf("  Wrong destination MAC: %x:%x:%x:%x:%x:%x\n",
 							eh->ether_dhost[0],
 							eh->ether_dhost[1],
 							eh->ether_dhost[2],
@@ -116,49 +117,27 @@ int main(int argc, char *argv[])
 							eh->ether_dhost[4],
 							eh->ether_dhost[5]);
 		}
-		char* ptr = buf+14;
+		char* ptr = buf+sizeof(struct ether_header);
 		strncpy(packet_dest_name,ptr,DEST_NAME_SIZE);
 		ptr+=DEST_NAME_SIZE;
 		strncpy(packet_source_name,ptr,SOURCE_NAME_SIZE);
 		ptr+=SOURCE_NAME_SIZE;
-		int sizeMessage = numbytes - 14 - DEST_NAME_SIZE - SOURCE_NAME_SIZE;
+		int sizeMessage = numbytes - sizeof(struct ether_header) - DEST_NAME_SIZE - SOURCE_NAME_SIZE;
 		message = malloc((sizeMessage+1)*sizeof(char));
 		strncpy(message,ptr,sizeMessage);
 		if (strncmp(my_dest_name,packet_dest_name,strlen(my_dest_name))==0){
-			printf("It's mine!\n");
+			printf("  IT IS MINE!\n");
+			printf("  Source: %s\n  Destination: %s\n  Message: %s\n\n",packet_source_name,packet_dest_name,message);
+		} else {
+			printf("  Not mine :(\n");
 		}
-		printf("Source: %s\nDestination: %s\nMessage: %s\n\n",packet_source_name,packet_dest_name,message);
+		
 		// 	/* Print packet */
 		// printf("\tData:");
 		// for (i=0; i<numbytes; i++) printf("%02x:", buf[i]);
 		// printf("\n");
 
 	}
-	
-
-	// /* Check the packet is for me */
-	
-
-	// /* Get source IP */
-	// ((struct sockaddr_in *)&their_addr)->sin_addr.s_addr = iph->saddr;
-	// inet_ntop(AF_INET, &((struct sockaddr_in*)&their_addr)->sin_addr, sender, sizeof sender);
-
-	// /* Look up my device IP addr if possible */
-	// strncpy(if_ip.ifr_name, interfaceName, IFNAMSIZ-1);
-	// if (ioctl(sockfd, SIOCGIFADDR, &if_ip) >= 0) { /* if we can't check then don't */
-	// 	printf("Source IP: %s\n My IP: %s\n", sender, 
-	// 			inet_ntoa(((struct sockaddr_in *)&if_ip.ifr_addr)->sin_addr));
-	// 	/* ignore if I sent it */
-	// 	if (strcmp(sender, inet_ntoa(((struct sockaddr_in *)&if_ip.ifr_addr)->sin_addr)) == 0)	{
-	// 		printf("but I sent it :(\n");
-	// 		ret = -1;
-	// 		goto done;
-	// 	}
-	// }
-
-	// /* UDP payload length */
-	// ret = ntohs(udph->len) - sizeof(struct udphdr);
-
 
 
 	close(sockfd);
