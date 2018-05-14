@@ -176,7 +176,7 @@ int _4b5b(char* input, char **out, int len) {
                             '1', '1', '1', '0', '0', 
                             '1', '1', '1', '0', '1'};
 
-    if((rtn = mem_alloc(out, len, len)) == -1){
+    if((rtn = mem_alloc(out, len, str_len)) == -1){
         return -1;
     }
 
@@ -201,10 +201,12 @@ int _4b5b(char* input, char **out, int len) {
 int char_to_bits(char* input, char** output, int len){
 	char* bits;
 	char* cursor;
-	int size=0;
+	//int size=ceil(len/8);
+	int size =0;
 	int i,j,c,jMax;
 
-	bits = malloc(1);
+	//bits = malloc(size);
+	//memset(cursor,0,size);
 	for(i=0;i<len;i+=8){
 		size = size + sizeof(char);
 		//printf("s: %d\n so: %s\n", size,sizeof(*bits));
