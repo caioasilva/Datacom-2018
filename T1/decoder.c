@@ -142,15 +142,87 @@ int32_t manchester(char* input, char **out, uint64_t len) {
 
     rtrn = binary_to_ascii(*out, out, str_len);
 
-    return len;
+    return str_len;
 }
 
 int32_t nrzi(char* input, char **out, uint64_t len) {
+    int32_t rtrn = 0;
+    uint32_t i;
+    char current = '0';
+
+    if((rtrn = mem_alloc(out, len, len)) == -1){
+        return -1;
+    }
+
+    if(rtrn < 0) {
+        printf("Can't convert string\n");
+        return (-1);
+    }
+
+    for (i = 0; i < len; i++) {
+        unsigned char ch = input[i];
+        char *o = &(*out)[i];
+
+        if (ch == current) {
+            *o++ = '0';
+        } else {
+            current = current == '0' ? '1' : '0';
+            *o++ = '1';
+        }
+    }
+
+    rtrn = binary_to_ascii(*out, out, len);
+
     return len;
 }
 
 int32_t _4b5b(char* input, char **out, uint64_t len) {
-    return len;
+    uint32_t i;
+    uint32_t j;
+    uint32_t rtn;
+    uint32_t str_len = len - len/5;
+    char encodings[80] = { '1', '1', '1', '1', '0', 
+                            '0', '1', '0', '0', '1', 
+                            '1', '0', '1', '0', '0', 
+                            '1', '0', '1', '0', '1', 
+                            '0', '1', '0', '1', '0', 
+                            '0', '1', '0', '1', '1', 
+                            '0', '1', '1', '1', '0', 
+                            '0', '1', '1', '1', '1', 
+                            '1', '0', '0', '1', '0', 
+                            '1', '0', '0', '1', '1', 
+                            '1', '0', '1', '1', '0', 
+                            '1', '0', '1', '1', '1', 
+                            '1', '1', '0', '1', '0', 
+                            '1', '1', '0', '1', '1', 
+                            '1', '1', '1', '0', '0', 
+                            '1', '1', '1', '0', '1'};
+
+    if((rtn = mem_alloc(out, len, str_len)) == -1){
+        return -1;
+    }
+    printf("My str: %s\n", encodings);
+    for(i = 0; i < len/5; i++) {
+        char *o = &(*out)[5 * i];
+        char subbuff[6];
+        memcpy(subbuff, &input[5 * i], 5);
+        subbuff[5] = '\0';
+        printf("%s\n", subbuff);
+        // int index = bin2dec(atoi(subbuff));
+
+        // for(j = 0; j < 5; j++) {
+            // *o++ = encodings[5 * index + j];
+        // }
+        char* pch = strstr(encodings, subbuff);
+        while ((pch) != NULL) {
+            pch = strstr(pch + 1, subbuff);
+            printf ("found at %ld\n",pch-encodings+1);
+        }
+    }
+
+    (*out)[str_len] = '\0';
+
+    return str_len;
 }
 
 int main(int argc, char *argv[]) {
