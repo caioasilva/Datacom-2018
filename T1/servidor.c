@@ -321,8 +321,17 @@ int main(int argc, char *argv[])
 	while(1){
 		//printf("Waiting for packet...\n");
 		numbytes = recvfrom(sockfd, buf, BUFFER_SIZE, 0, NULL, NULL);
-        if (!responseSent)
+        if (responseSent && eh->ether_dhost[0] == MACAddr[0] &&
+                eh->ether_dhost[1] == MACAddr[1] &&
+                eh->ether_dhost[2] == MACAddr[2] &&
+                eh->ether_dhost[3] == MACAddr[3] &&
+                eh->ether_dhost[4] == MACAddr[4] &&
+                eh->ether_dhost[5] == MACAddr[5]){
+            responseSent=0;
+
+        }else
         {
+            responseSent=0;
     		printf("> Captured a packet: %lu bytes\n", numbytes);
     		if (eh->ether_dhost[0] == MACAddr[0] &&
     			eh->ether_dhost[1] == MACAddr[1] &&
@@ -367,12 +376,12 @@ int main(int argc, char *argv[])
                     char command[100];
                     sprintf(command,"./cliente.app %s %x:%x:%x:%x:%x:%x %s %s %s -%c 1 > nul.out",
                                     interfaceName,
-                                    eh->ether_dhost[0],
-                                    eh->ether_dhost[1],
-                                    eh->ether_dhost[2],
-                                    eh->ether_dhost[3],
-                                    eh->ether_dhost[4],
-                                    eh->ether_dhost[5],
+                                    eh->ether_shost[0],
+                                    eh->ether_shost[1],
+                                    eh->ether_shost[2],
+                                    eh->ether_shost[3],
+                                    eh->ether_shost[4],
+                                    eh->ether_shost[5],
                                     my_dest_name,
                                     packet_source_name,
                                     buffer,
@@ -425,10 +434,6 @@ int main(int argc, char *argv[])
     		// printf("\tData:");
     		// for (i=0; i<numbytes; i++) printf("%02x:", buf[i]);
     		// printf("\n");
-        }
-        else
-        {
-            responseSent=0;
         }
 	}
 
