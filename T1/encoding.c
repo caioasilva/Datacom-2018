@@ -33,6 +33,19 @@ int32_t mem_alloc(char **out, uint64_t len, uint32_t str_len) {
     return 0;
 }
 
+int bin2dec (int num) {
+    int  decimal_val = 0, base = 1, rem;
+
+    while (num > 0) {
+        rem = num % 10;
+        decimal_val = decimal_val + rem * base;
+        num = num / 10 ;
+        base = base * 2;
+    }
+
+    return decimal_val;
+}
+
 /**
 * Converts a sequence of ascii characters into its correpondents binary
 * 
@@ -65,56 +78,20 @@ int32_t ascii_to_binary(char *input, char **out, uint64_t len) {
     return (str_len);
 }
 
-int bin2dec (int num) {
-    int  decimal_val = 0, base = 1, rem;
-
-    while (num > 0) {
-        rem = num % 10;
-        decimal_val = decimal_val + rem * base;
-        num = num / 10 ;
-        base = base * 2;
-    }
-
-    return decimal_val;
-}
-
-int32_t nrz(char* input, char **out, uint64_t len) {
-    uint32_t i;
-    uint32_t rtn;
-
-    if((rtn = mem_alloc(out, len, len)) == -1){
-        return -1;
-    }
-
-    for(i = 0; i < len; i++) {
-        unsigned char ch = input[i];
-        char *o = &(*out)[i];
-
-        *o++ = ch;
-    }
-
-    (*out)[len] = '\0';
-
-    return (len);    
-}
-
-int32_t manchester(char* input, char **out, uint64_t len) {
+int32_t binary_to_ascii(char *input, char **out, uint64_t len) {
     uint32_t i;
     uint32_t j;
-    uint32_t rtn;
-    uint32_t str_len = len * 2;
+    int32_t rtn;
+    uint32_t str_len = len / 8;
 
-    if((rtn = mem_alloc(out, len, str_len)) == -1){
-        return -1;
-    }
+    for(i = 0; i < str_len; i++) {
+        char *o = &(*out)[i];
+        char subbuff[9];
+        memcpy(subbuff, &input[8 * i], 8);
+        subbuff[8] = '\0';
+        char character = (char) bin2dec(atoi(subbuff));
 
-    for (i = 0; i < len; i++) {
-        unsigned char ch = input[i];
-        char *o = &(*out)[2 * i];
-
-        for(j = 0; j < 2; j++) {
-            *o++ = ch ^ j;
-        }
+        *o++ = character;
     }
 
     (*out)[str_len] = '\0';
@@ -122,95 +99,103 @@ int32_t manchester(char* input, char **out, uint64_t len) {
     return (str_len);
 }
 
-int32_t nrzi(char* input, char **out, uint64_t len) {
-    uint32_t i;
-    uint32_t rtn;
-    char current = '0';
-
-    if((rtn = mem_alloc(out, len, len)) == -1){
-        return -1;
-    }
-    
-    for(i = 0; i < len; i++) {
-        unsigned char ch = input[i];
-        char *o = &(*out)[i];
-
-        *o++ = ch == '0' ? current : (current = current == '0' ? '1' : '0');
-    }
-
-    (*out)[len] = '\0';
-
-    return 0;
-}
-
-int32_t _4b5b(char* input, char **out, uint64_t len) {
-    uint32_t i;
-    uint32_t j;
-    uint32_t rtn;
-    uint32_t str_len = len + len/4;
-    char encodings[80] = { '1', '1', '1', '1', '0', 
-                            '0', '1', '0', '0', '1', 
-                            '1', '0', '1', '0', '0', 
-                            '1', '0', '1', '0', '1', 
-                            '0', '1', '0', '1', '0', 
-                            '0', '1', '0', '1', '1', 
-                            '0', '1', '1', '1', '0', 
-                            '0', '1', '1', '1', '1', 
-                            '1', '0', '0', '1', '0', 
-                            '1', '0', '0', '1', '1', 
-                            '1', '0', '1', '1', '0', 
-                            '1', '0', '1', '1', '1', 
-                            '1', '1', '0', '1', '0', 
-                            '1', '1', '0', '1', '1', 
-                            '1', '1', '1', '0', '0', 
-                            '1', '1', '1', '0', '1'};
-
-    if((rtn = mem_alloc(out, len, len)) == -1){
-        return -1;
-    }
-
-    for(i = 0; i < len/4; i++) {
-        char *o = &(*out)[5 * i];
-        char subbuff[5];
-        memcpy(subbuff, &input[4 * i], 4);
-        subbuff[4] = '\0';
-
-        int index = bin2dec(atoi(subbuff));
-
-        for(j = 0; j < 5; j++) {
-            *o++ = encodings[5 * index + j];
-        }
-    }
-
-    (*out)[str_len] = '\0';
-
-    return 0;
-}
-
-int main(int argc, char *argv[]) {
+int32_t nrz(char* input, char **out, uint64_t len) {
     int32_t rtrn = 0;
     char *buffer = NULL;
-    char *encoding = NULL;
+    printf("%s\n", input);
 
-    rtrn = ascii_to_binary(argv[2], &buffer, strlen(argv[2]));
+    if((rtrn = mem_alloc(out, len, len)) == -1){
+        return -1;
+    }
+
     if(rtrn < 0) {
         printf("Can't convert string\n");
         return (-1);
     }
 
-    printf("str: %s\n", buffer);
+    rtrn = binary_to_ascii(input, out, len);
 
-    if (strcmp(argv[1], "-n") == 0) {
-        nrz(buffer, &encoding, strlen(buffer));
-    } else if (strcmp(argv[1], "-m") == 0) {
-        manchester(buffer, &encoding, strlen(buffer));
-    } else if (strcmp(argv[1], "-i") == 0) {
-        nrzi(buffer, &encoding, strlen(buffer));
-    } else if (strcmp(argv[1], "-f") == 0) {
-        _4b5b(buffer, &encoding, strlen(buffer));
+    return len;
+}
+
+int32_t manchester(char* input, char **out, uint64_t len) {
+    int32_t rtrn = 0;
+    uint32_t i;
+    uint32_t j;
+    uint32_t str_len = len / 2;
+
+    if((rtrn = mem_alloc(out, len, str_len)) == -1){
+        return -1;
     }
 
-    printf("enc: %s\n", encoding);
+    if(rtrn < 0) {
+        printf("Can't convert string\n");
+        return (-1);
+    }
+
+    for (i = 0; i < len; i+=2) {
+        unsigned char ch = input[i];
+        char *o = &(*out)[i/2];
+
+        *o++ = ch ^ (i % 2);
+    }
+
+    rtrn = binary_to_ascii(*out, out, str_len);
+
+    return str_len;
+}
+
+int32_t nrzi(char* input, char **out, uint64_t len) {
+    int32_t rtrn = 0;
+    uint32_t i;
+    char current = '0';
+
+    if((rtrn = mem_alloc(out, len, len)) == -1){
+        return -1;
+    }
+
+    if(rtrn < 0) {
+        printf("Can't convert string\n");
+        return (-1);
+    }
+
+    for (i = 0; i < len; i++) {
+        unsigned char ch = input[i];
+        char *o = &(*out)[i];
+
+        if (ch == current) {
+            *o++ = '0';
+        } else {
+            current = current == '0' ? '1' : '0';
+            *o++ = '1';
+        }
+    }
+
+    rtrn = binary_to_ascii(*out, out, len);
+
+    return len;
+}
+
+int32_t _4b5b(char* input, char **out, uint64_t len) {
+    return len;
+}
+
+int main(int argc, char *argv[]) {
+    int32_t rtrn = 0;
+    char *buffer = NULL;
+    char *decoding = NULL;
+
+    if (strcmp(argv[1], "-n") == 0) {
+        nrz(argv[2], &decoding, strlen(argv[2]));
+    } else if (strcmp(argv[1], "-m") == 0) {
+        manchester(argv[2], &decoding, strlen(argv[2]));
+    } else if (strcmp(argv[1], "-i") == 0) {
+        nrzi(argv[2], &decoding, strlen(argv[2]));
+    } else if (strcmp(argv[1], "-f") == 0) {
+        _4b5b(argv[2], &decoding, strlen(argv[2]));
+    }
+
+    printf("dec: %s\n", decoding);
 
     return (0);
 }
