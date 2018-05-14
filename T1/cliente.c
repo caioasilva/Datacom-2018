@@ -376,6 +376,13 @@ int main(int argc, char *argv[])
 		for (int j = 0; j < tx_len; j++)
 			printf("%02x ",(unsigned char)sendDataBuffer[j]);
 		printf("\n");
+		char receiveBuffer[BUFFER_SIZE];
+		if( recv(sockfd , receiveBuffer , BUFFER_SIZE , 0) < 0)
+	    {
+	        printf("Response receive fail");
+	    } else {
+	    	
+	    }
 	}
 	return 0;
 }
