@@ -207,6 +207,7 @@ int char_to_bits(char* input, char** output, int len){
 	bits = malloc(1);
 	for(i=0;i<len;i+=8){
 		size = size + sizeof(char);
+		//printf("s: %d\n so: %s\n", size,sizeof(*bits));
 		bits = realloc(bits,size);
 		cursor = bits+i/8;
 		memset(cursor,0,1);
