@@ -237,42 +237,32 @@ char* encodeProtocol(int* size, char* destinationName, char* sourceName, char* m
 	char* bin;
 	char* encodedMessage;
 	int messageSize;
-	if (encoding != NULL){
-		if (strcmp(encoding,"-n")==0){
-			printf("Using NRZ Encoding\n");
-			ascii_to_binary(message, &bin, strlen(message));
-			nrz(bin, &temp, strlen(bin));
-			messageSize = char_to_bits(temp,&encodedMessage,strlen(temp));
-		}  else if (strcmp(encoding, "-m") == 0) {
-			printf("Using Manchester Encoding\n");
-			ascii_to_binary(message, &bin, strlen(message));
-        	manchester(bin, &temp, strlen(bin));
-        	messageSize = char_to_bits(temp,&encodedMessage,strlen(temp));
-	    } else if (strcmp(encoding, "-i") == 0) {
-	    	printf("Using NRZI Encoding\n");
-	    	ascii_to_binary(message, &bin, strlen(message));
-	        nrzi(bin, &temp, strlen(bin));
-	        messageSize = char_to_bits(temp,&encodedMessage,strlen(temp));
-	    } else if (strcmp(encoding, "-f") == 0) {
-	    	printf("Using 4B5B Encoding\n");
-	    	ascii_to_binary(message, &bin, strlen(message));
-	        _4b5b(bin, &temp, strlen(bin));
-	        messageSize = char_to_bits(temp,&encodedMessage,strlen(temp));
-		} else{
-			printf("Invalid encoding, using none (raw message)\n");
-			encodedMessage = message;
-			messageSize = strlen(message);
-		}
-		//printf("%s\n%s\n%s\n",message,bin,temp);
-		//printf("%x\n",*encodedMessage);
+	ascii_to_binary(message, &bin, strlen(message));
+	if (encoding == NULL){
+		printf("No encoding especified. Using NRZ Encoding\n");
+		nrz(bin, &temp, strlen(bin));
+	} else if (strcmp(encoding, "-m") == 0) {
+		printf("Using Manchester Encoding\n");
+    	manchester(bin, &temp, strlen(bin));
+    } else if (strcmp(encoding, "-i") == 0) {
+    	printf("Using NRZI Encoding\n");
+        nrzi(bin, &temp, strlen(bin));
+    } else if (strcmp(encoding, "-f") == 0) {
+    	printf("Using 4B5B Encoding\n");
+        _4b5b(bin, &temp, strlen(bin));
+	} else if (strcmp(encoding, "-n") == 0){
+		printf("Using NRZ Encoding\n");
+		nrz(bin, &temp, strlen(bin));
 	} else {
-		encodedMessage = message;
-		messageSize = strlen(message);
+		printf("Invalid encoding especified. Using NRZ Encoding\n");
+		nrz(bin, &temp, strlen(bin));
 	}
+	printf("Encoded message bits: \n%s\n",temp);
+	messageSize = char_to_bits(temp,&encodedMessage,strlen(temp));
 	//printf("%s",message);
 	*size = SOURCE_NAME_SIZE + DEST_NAME_SIZE + messageSize;
 
-	printf("Sending message: %s\n",encodedMessage);
+	//printf("Encoded message bytes: %s\n",encodedMessage);
 	//char data[size];
 	char* data = calloc(*size,sizeof(char));
 	char* prot_ptr = data;
@@ -378,7 +368,7 @@ int main(int argc, char *argv[])
 	if (sendto(sockfd, sendDataBuffer, tx_len, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0)
 	    printf("Send failed\n");
 	else{
-		printf("Bytes: ");
+		printf("Ethernet Frame Bytes: \n");
 		for (int j = 0; j < tx_len; j++)
 			printf("%02x ",(unsigned char)sendDataBuffer[j]);
 		printf("\n");
