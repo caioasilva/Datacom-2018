@@ -84,10 +84,6 @@ int32_t binary_to_ascii(char *input, char **out, uint64_t len) {
     int32_t rtn;
     uint32_t str_len = len / 8;
 
-    if((rtn = mem_alloc(out, len, str_len)) == -1){
-        return -1;
-    }
-
     for(i = 0; i < str_len; i++) {
         char *o = &(*out)[i];
         char subbuff[9];
@@ -108,16 +104,44 @@ int32_t nrz(char* input, char **out, uint64_t len) {
     char *buffer = NULL;
     printf("%s\n", input);
 
-    rtrn = binary_to_ascii(input, out, len);
+    if((rtrn = mem_alloc(out, len, len)) == -1){
+        return -1;
+    }
+
     if(rtrn < 0) {
         printf("Can't convert string\n");
         return (-1);
     }
 
+    rtrn = binary_to_ascii(input, out, len);
+
     return len;
 }
 
 int32_t manchester(char* input, char **out, uint64_t len) {
+    int32_t rtrn = 0;
+    uint32_t i;
+    uint32_t j;
+    uint32_t str_len = len / 2;
+
+    if((rtrn = mem_alloc(out, len, str_len)) == -1){
+        return -1;
+    }
+
+    if(rtrn < 0) {
+        printf("Can't convert string\n");
+        return (-1);
+    }
+
+    for (i = 0; i < len; i+=2) {
+        unsigned char ch = input[i];
+        char *o = &(*out)[i/2];
+
+        *o++ = ch ^ (i % 2);
+    }
+
+    rtrn = binary_to_ascii(*out, out, str_len);
+
     return len;
 }
 
