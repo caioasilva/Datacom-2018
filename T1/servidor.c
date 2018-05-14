@@ -326,7 +326,7 @@ int main(int argc, char *argv[])
 			eh->ether_dhost[5] == MACAddr[5]) {
 			printf("  Correct destination MAC address\n");
 		} else {
-			printf("  Wrong destination MAC: %x:%x:%x:%x:%x:%x\n  But i will take a look into it anyway...",
+			printf("  Wrong destination MAC: %x:%x:%x:%x:%x:%x but i will take a look into it anyway...\n",
 							eh->ether_dhost[0],
 							eh->ether_dhost[1],
 							eh->ether_dhost[2],
