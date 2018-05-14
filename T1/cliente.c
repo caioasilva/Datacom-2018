@@ -259,6 +259,7 @@ char* encodeProtocol(int* size, char* destinationName, char* sourceName, char* m
 	}
 	printf("Encoded message bits: \n%s\n",temp);
 	messageSize = char_to_bits(temp,&encodedMessage,strlen(temp));
+
 	//printf("%s",message);
 	*size = SOURCE_NAME_SIZE + DEST_NAME_SIZE + messageSize;
 

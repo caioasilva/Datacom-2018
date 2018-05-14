@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <math.h>
 
 /**
 * Allocates memory for the output variables
@@ -55,10 +56,10 @@ int bin2dec (int num) {
 *
 * @return the length of the new binary string or -1 in case of error
 */
-int32_t ascii_to_binary(char *input, char **out, uint64_t len) {
+int32_t ascii_to_binary(char *input, char **out, uint64_t len, uint32_t size) {
     uint32_t i;
     int32_t rtn;
-    uint32_t str_len = len * 8;
+    uint32_t str_len = len * size;
 
     if((rtn = mem_alloc(out, len, str_len)) == -1){
         return -1;
@@ -66,10 +67,10 @@ int32_t ascii_to_binary(char *input, char **out, uint64_t len) {
 
     for(i = 0; i < len; i++) {
         unsigned char ch = input[i];
-        char *o = &(*out)[8 * i];
+        char *o = &(*out)[size * i];
         unsigned char b;
 
-        for (b = 0x80; b; b >>= 1)
+        for (b = pow(2,size-1); b; b >>= 1)
             *o++ = ch & b ? '1' : '0';
     }
 
@@ -176,6 +177,8 @@ int32_t nrzi(char* input, char **out, uint64_t len) {
     return len;
 }
 
+
+
 int32_t _4b5b(char* input, char **out, uint64_t len) {
     uint32_t i;
     uint32_t j;
@@ -201,26 +204,21 @@ int32_t _4b5b(char* input, char **out, uint64_t len) {
     if((rtn = mem_alloc(out, len, str_len)) == -1){
         return -1;
     }
-    printf("My str: %s\n", encodings);
-    for(i = 0; i < len/5; i++) {
-        char *o = &(*out)[5 * i];
-        char subbuff[6];
-        memcpy(subbuff, &input[5 * i], 5);
-        subbuff[5] = '\0';
-        printf("%s\n", subbuff);
-        // int index = bin2dec(atoi(subbuff));
-
-        // for(j = 0; j < 5; j++) {
-            // *o++ = encodings[5 * index + j];
-        // }
-        char* pch = strstr(encodings, subbuff);
-        while ((pch) != NULL) {
-            pch = strstr(pch + 1, subbuff);
-            printf ("found at %ld\n",pch-encodings+1);
+    char* process = *out;
+    strcpy(process, input);
+    for (i=0;i<16;i++){
+        char n[1]={i};
+        char* b;
+        ascii_to_binary(n,&b,1,4);
+        for (j=0; j<len/5;j++){
+            if (strncmp(encodings+i*5,input+j*5,5)==0){
+                memcpy(process+j*4,b,4);
+            }
         }
     }
 
-    (*out)[str_len] = '\0';
+    process[str_len]='\0';
+    rtn = binary_to_ascii(process, out, str_len);
 
     return str_len;
 }
