@@ -86,6 +86,13 @@ int32_t ascii_to_binary(char *input, char **out, uint64_t len, uint32_t size) {
     return (str_len);
 }
 
+/**
+* Converts a binary number to its decimal equivalent
+* 
+* @param num the number in base 2 to be converted to base 10
+*
+* @return the number in base 10
+*/
 int bin2dec (int num) {
     int  decimal_val = 0, base = 1, rem;
 
@@ -99,6 +106,15 @@ int bin2dec (int num) {
     return decimal_val;
 }
 
+/**
+* Converts a binary number into its correpondent sequence of ascii characters
+* 
+* @param input binary number
+* @param out string in ascii characters
+* @param len length of the string of binary number to be converted
+*
+* @return the length of the new binary string or -1 in case of error
+*/
 int binary_to_ascii(char *input, char **out, int len) {
     uint32_t i;
     uint32_t j;
@@ -120,6 +136,15 @@ int binary_to_ascii(char *input, char **out, int len) {
     return (str_len);
 }
 
+/**
+* Converts a nrz encoding to its byte stream equivalent
+* 
+* @param input string in nrz encoding
+* @param out string decoded
+* @param len length of the stream to be decoded
+*
+* @return the length of the new decoding or -1 in case of error
+*/
 int32_t nrz(char* input, char **out, uint64_t len) {
     int32_t rtrn = 0;
     char *buffer = NULL;
@@ -139,6 +164,15 @@ int32_t nrz(char* input, char **out, uint64_t len) {
     return len;
 }
 
+/**
+* Converts a manchester encoding to its byte stream equivalent
+* 
+* @param input string in manchester encoding
+* @param out string decoded
+* @param len length of the stream to be decoded
+*
+* @return the length of the new decoding or -1 in case of error
+*/
 int32_t manchester(char* input, char **out, uint64_t len) {
     int32_t rtrn = 0;
     uint32_t i;
@@ -166,6 +200,15 @@ int32_t manchester(char* input, char **out, uint64_t len) {
     return str_len;
 }
 
+/**
+* Converts a nrzi encoding to its byte stream equivalent
+* 
+* @param input string in nrzi encoding
+* @param out string decoded
+* @param len length of the stream to be decoded
+*
+* @return the length of the new decoding or -1 in case of error
+*/
 int32_t nrzi(char* input, char **out, uint64_t len) {
     int32_t rtrn = 0;
     uint32_t i;
@@ -197,6 +240,15 @@ int32_t nrzi(char* input, char **out, uint64_t len) {
     return len;
 }
 
+/**
+* Converts a 4B5B encoding to its byte stream equivalent
+* 
+* @param input string in 4B5B encoding
+* @param out string decoded
+* @param len length of the stream to be decoded
+*
+* @return the length of the new decoding or -1 in case of error
+*/
 int32_t _4b5b(char* input, char **out, uint64_t len) {
     uint32_t i;
     uint32_t j;
@@ -259,7 +311,6 @@ int main(int argc, char *argv[])
 	char* message;
     int responseSent=0;
     int returnReceive=0;
-   // struct sockaddr_ll socket_address;
 	
 	/* Get interface name */
 	if (argc > 2){
@@ -305,11 +356,8 @@ int main(int argc, char *argv[])
 		close(sockfd);
 		exit(EXIT_FAILURE);
 	}
+
 	// /* Get the MAC address of the interface to send on */
-	// memset(&if_mac, 0, sizeof(struct ifreq));
-	// strncpy(if_mac.ifr_name, interfaceName, IFNAMSIZ-1);
-	// if (ioctl(sockfd, SIOCGIFHWADDR, &if_mac) < 0)
-	//     perror("SIOCGIFHWADDR");
 	printf("My MAC: %x:%x:%x:%x:%x:%x\nMy Name: %s\n\n",
 							MACAddr[0],
 							MACAddr[1],
@@ -319,7 +367,6 @@ int main(int argc, char *argv[])
 							MACAddr[5], 
 							my_dest_name);
 	while(1){
-		//printf("Waiting for packet...\n");
 		numbytes = recvfrom(sockfd, buf, BUFFER_SIZE, 0, NULL, NULL);
         if (responseSent && eh->ether_dhost[0] == MACAddr[0] &&
                 eh->ether_dhost[1] == MACAddr[1] &&
@@ -349,8 +396,7 @@ int main(int argc, char *argv[])
     							eh->ether_dhost[3],
     							eh->ether_dhost[4],
     							eh->ether_dhost[5]);
-                // if(returnReceive)
-                //     return 1;
+
     		}
     		char* ptr = buf+sizeof(struct ether_header);
     		strncpy(packet_dest_name,ptr,DEST_NAME_SIZE);
@@ -370,9 +416,7 @@ int main(int argc, char *argv[])
                     return 0;
                 else{
                     char buffer[10] = "olá";
-                    // if(sendto(sockfd,buffer,10,0)>0){
-                    //     printf("Respondido\n");
-                    // }
+
                     char command[100];
                     sprintf(command,"./cliente.app %s %x:%x:%x:%x:%x:%x %s %s %s -%c 1 > nul.out",
                                     interfaceName,
@@ -386,7 +430,6 @@ int main(int argc, char *argv[])
                                     packet_source_name,
                                     buffer,
                                     packet_encoding[1]);
-                    //printf("%s\n",command);
                     sleep(1);
                     if(system(command)==0){
                         responseSent=1;
@@ -428,12 +471,6 @@ int main(int argc, char *argv[])
 
 
     		printf("\n");
-    		
-    		
-    		// 	/* Print packet */
-    		// printf("\tData:");
-    		// for (i=0; i<numbytes; i++) printf("%02x:", buf[i]);
-    		// printf("\n");
         }
 	}
 
