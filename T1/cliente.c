@@ -77,6 +77,13 @@ int ascii_to_binary(char *input, char **out, int len) {
     return (str_len);
 }
 
+/**
+* Converts a binary number to its decimal equivalent
+* 
+* @param num the number in base 2 to be converted to base 10
+*
+* @return the number in base 10
+*/
 int bin2dec (int num) {
     int  decimal_val = 0, base = 1, rem;
 
@@ -90,6 +97,15 @@ int bin2dec (int num) {
     return decimal_val;
 }
 
+/**
+* Converts a byte stream to its nrz encoding
+* 
+* @param input string to be converted
+* @param out string in nrz encoding
+* @param len length of the byte stream to be converted
+*
+* @return the length of the new encoding or -1 in case of error
+*/
 int nrz(char* input, char **out, int len) {
     int i;
     int rtn;
@@ -110,6 +126,15 @@ int nrz(char* input, char **out, int len) {
     return (len);    
 }
 
+/**
+* Converts a byte stream to its manchester encoding
+* 
+* @param input string to be converted
+* @param out string in manchester encoding
+* @param len length of the byte stream to be converted
+*
+* @return the length of the new encoding or -1 in case of error
+*/
 int manchester(char* input, char **out, int len) {
     uint32_t i;
     uint32_t j;
@@ -134,6 +159,15 @@ int manchester(char* input, char **out, int len) {
     return (str_len);
 }
 
+/**
+* Converts a byte stream to its nrzi encoding
+* 
+* @param input string to be converted
+* @param out string in nrzi encoding
+* @param len length of the byte stream to be converted
+*
+* @return the length of the new encoding or -1 in case of error
+*/
 int nrzi(char* input, char **out, int len) {
     uint32_t i;
     int rtn;
@@ -155,6 +189,15 @@ int nrzi(char* input, char **out, int len) {
     return 0;
 }
 
+/**
+* Converts a byte stream to its 4B5B encoding
+* 
+* @param input string to be converted
+* @param out string in 4B5B encoding
+* @param len length of the byte stream to be converted
+*
+* @return the length of the new encoding or -1 in case of error
+*/
 int _4b5b(char* input, char **out, int len) {
     uint32_t i;
     uint32_t j;
@@ -199,40 +242,34 @@ int _4b5b(char* input, char **out, int len) {
     return 0;
 }
 
+/**
+* Converts a char stream to its bits equivalent
+* 
+* @param input string to be converted
+* @param out string bits
+* @param len length of the string to be converted
+*
+* @return the length of the bit sequence
+*/
 int char_to_bits(char* input, char** output, int len){
 	char* bits;
 	char* cursor;
-	//int size=ceil(len/8);
 	int size =0;
 	int i,j,c,jMax;
 
 	bits = malloc(1);
-	//memset(cursor,0,size);
 	for(i=0;i<len;i+=8){
 		size = size + sizeof(char);
-		//printf("s: %d\n so: %s\n", size,sizeof(*bits));
 		bits = realloc(bits,size);
 		cursor = bits+i/8;
-		//printf("c: %d\n",i/8);
 		memset(cursor,0,1);
-		// if(len-i < 8){
-		// 	jMax = len-i;
-		// }else
-		// 	jMax=8;
-
-		//printf("bits: %x\ncursor: %x\n",bits,cursor);
 		for(j=0;j<8;j++){
-			//printf("%x\n",(char)*cursor);
 			*cursor <<= 1;
 			c = *(input+i+j)-48;
-			//printf("d: %d\n", c);
 			*cursor |= (c & 0x01);
 		}
-		//printf("%x\n",(char)*bits);
-		//printf("%x\n",(char)*cursor);
 	}
-	//printf("bits: %x\ncursor: %x\n",bits,cursor);
-	//printf("%x\n",(char)*(bits));]
+
 	*output = bits;
 	return size;
 }
@@ -268,11 +305,8 @@ char* encodeProtocol(int* size, char* destinationName, char* sourceName, char* m
 	printf("Encoded message bits: \n%s\n",temp);
 	messageSize = char_to_bits(temp,&encodedMessage,strlen(temp));
 
-	//printf("%s",message);
 	*size = SOURCE_NAME_SIZE  + DEST_NAME_SIZE + ENCODING_DESC_SIZE + messageSize;
 
-	//printf("Encoded message bytes: %s\n",encodedMessage);
-	//char data[size];
 	char* data = calloc(*size,sizeof(char));
 	char* prot_ptr = data;
 	memcpy(prot_ptr,destinationName,strlen(destinationName));
@@ -318,7 +352,6 @@ int main(int argc, char *argv[])
       	if (argc >7)
       		notwait=1;
       	protocol = encodeProtocol(&protocol_size, argv[4],argv[3],argv[5],encode);
-      	//protocol_size = sizeof(protocol);
 
 	}else{
 		fprintf(stderr,"Invalid Arguments. Example:\n./cliente interface MACaddr sourceName destinationName message encoding\n\nEncodings:\n-n: NRZ\n-m: Manchester\n-i: NRZI\n-f: 4B5B\n");
